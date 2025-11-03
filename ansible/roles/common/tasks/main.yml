@@ -1,0 +1,20 @@
+---
+- name: Update and upgrade system packages
+  apt:
+    update_cache: yes
+    upgrade: dist
+
+- name: Install essential security packages
+  apt:
+    name:
+      - unattended-upgrades
+      - auditd
+      - ufw
+      - fail2ban
+    state: present
+
+- name: Enable and start auditd service
+  systemd:
+    name: auditd
+    enabled: yes
+    state: started

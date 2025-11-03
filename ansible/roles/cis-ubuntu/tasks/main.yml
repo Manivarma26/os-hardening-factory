@@ -1,0 +1,30 @@
+---
+- name: Enforce password expiry policy
+  lineinfile:
+    path: /etc/login.defs
+    regexp: '^PASS_MAX_DAYS'
+    line: 'PASS_MAX_DAYS 90'
+
+- name: Disable root SSH login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PermitRootLogin'
+    line: 'PermitRootLogin no'
+
+- name: Ensure UFW (firewall) is enabled
+  ufw:
+    state: enabled
+
+- name: Configure auditd for user and system events
+  lineinfile:
+    path: /etc/audit/audit.rules
+    insertafter: EOF
+    line: '-w /etc/passwd -p wa -k user_changes'
+
+- name: Restart SSH and auditd
+  systemd:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - ssh
+    - auditd

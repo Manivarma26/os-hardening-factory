@@ -1,0 +1,9 @@
+---
+- name: Apply CIS hardening for Ubuntu 22.04
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - common
+    - cis-ubuntu

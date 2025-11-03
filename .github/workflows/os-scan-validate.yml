@@ -1,0 +1,28 @@
+name: "OS Compliance Scan & Validation"
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  scan-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          format: 'json'
+          output: 'outputs/reports/trivy-config.json'
+
+      - name: Run CIS Benchmark Check (Simulated)
+        run: bash scans/cis-benchmark-check.sh ubuntu-22.04
+
+      - name: Upload Compliance Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-reports
+          path: outputs/reports/
