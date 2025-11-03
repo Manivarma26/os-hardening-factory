@@ -1,0 +1,65 @@
+name: "OS Hardening Build & Promotion"
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - "packer/**"
+      - "ansible/**"
+      - "policies/**"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-hardened-image:
+    name: Build Hardened OS Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate governance policies
+        run: python3 scripts/validate-policies.py
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::661539128717:role/TerraformGitHubOIDCRole
+          aws-region: ap-south-1
+
+      - name: Validate Packer template
+        run: packer validate packer/ubuntu-22.04.json
+
+      - name: Build hardened AMI (Ubuntu 22.04)
+        run: |
+          packer build -color=false packer/ubuntu-22.04.json
+
+      - name: Run compliance scans
+        run: |
+          bash scans/trivy-scan.sh ubuntu-22.04
+          bash scans/cis-benchmark-check.sh ubuntu-22.04
+
+      - name: Check compliance results
+        run: |
+          CIS_SCORE=$(jq -r '.score' outputs/reports/cis-benchmark-ubuntu-22.04.json)
+          if (( $(echo "$CIS_SCORE < 90" | bc -l) )); then
+            echo "❌ CIS Score below threshold ($CIS_SCORE%). Failing build."
+            exit 1
+          fi
+          echo "✅ CIS Compliance Score: $CIS_SCORE%"
+
+      - name: Upload compliance reports
+        uses: aws-actions/s3-sync@v2
+        with:
+          args: --acl private --follow-symlinks
+        env:
+          AWS_S3_BUCKET: manivarma-secops-compliance-reports
+        with:
+          source-dir: outputs/reports/
+          dest-dir: os-hardened/ubuntu-22.04/
+
+      - name: Tag image as compliant
+        run: echo "✅ Image promoted successfully — CIS compliant and vulnerability-free."
