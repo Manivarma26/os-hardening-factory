@@ -1,0 +1,11 @@
+ubuntu:
+  owner_ids: ["099720109477"]    # Canonical official AMIs
+  name_glob: "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
+
+rhel:
+  owner_ids: ["309956199498"]    # Red Hat official AMIs
+  name_glob: "RHEL-9.*_HVM-*"
+
+amazonlinux:
+  owner_ids: ["137112412989"]    # Amazon official AMIs
+  name_glob: "al2023-ami-*-x86_64"

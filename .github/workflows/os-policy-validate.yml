@@ -1,0 +1,33 @@
+name: "OS Policy Validation"
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "policies/**"
+      - "scripts/validate-policies.py"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "policies/**"
+  workflow_dispatch: {}
+
+jobs:
+  policy-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: pip install pyyaml
+
+      - name: Validate Governance Policies
+        run: |
+          echo "Running enterprise OS governance policy validation..."
+          python3 scripts/validate-policies.py

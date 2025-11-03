@@ -1,0 +1,9 @@
+version: "enterprise-cis-v3.0"
+level: 1
+min_compliance_score: 90
+rules:
+  enforce_firewall: true
+  disable_root_ssh: true
+  password_expiry_days: 90
+  auditd_enabled: true
+  kernel_params_hardened: true
